@@ -42,3 +42,7 @@ if exists('+compatible')
   set nocompatible
 endif
 
+" Detect Makefiles and force tabs
+autocmd FileType make set noexpandtab tabstop=8 shiftwidth=8 softtabstop=0
+
+

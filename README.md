@@ -84,6 +84,7 @@ cd ~/.dotfiles
   - [ ] `~/.netrc`
   - [ ] `~/.aws/config`
   - [ ] `~/.docker/config.json`
+- [ ] Fix Github Actions
 
 ## 💡 Philosophy
 - 📦 No global dependencies — native tools only
