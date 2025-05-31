@@ -23,7 +23,7 @@ Includes:
 curl -fsSL https://raw.githubusercontent.com/daszybak/.dotfiles/main/install.sh | bash
 ```
 
-###🔹 Auto-confirm / CI-friendly setup
+### 🔹 Auto-confirm / CI-friendly setup
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/daszybak/.dotfiles/main/install.sh | bash -s -- -y
