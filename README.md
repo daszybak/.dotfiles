@@ -38,6 +38,7 @@ cd ~/.dotfiles
 
 ## Folder Structure
 
+```text
 .dotfiles/
 ├── install.sh             # Cross-platform setup script
 ├── bash/.bashrc           # Bash config
@@ -55,6 +56,7 @@ cd ~/.dotfiles
 │       ├── windows.sh
 │       └── wsl.sh
 └── secrets/               # GPG-encrypted files (e.g. .ssh/config.local)
+```
 
 ## 🛣️ Roadmap
 
