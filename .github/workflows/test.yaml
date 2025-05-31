@@ -1,0 +1,26 @@
+me: Dotfiles Install Test
+
+on:
+  push:
+    pull_request:
+      workflow_dispatch:
+
+      jobs:
+        test-dotfiles:
+            runs-on: ubuntu-latest  # or macos-latest for macOS
+
+                steps:
+                      - name: Checkout repo
+                              uses: actions/checkout@v3
+
+                                    - name: Make install.sh executable
+                                            run: chmod +x install.sh
+
+                                                  - name: Run dotfiles installer
+                                                          run: ./install.sh
+
+                                                                - name: Verify installed shell configs
+                                                                        run: |
+                                                                                  echo "Check if core.sh exists:"
+                                                                                            test -f "$HOME/.dotfiles/shell/core.sh" && echo "core.sh found!" || exit 1
+

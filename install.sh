@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+
 # install.sh - Cross-platform dotfiles installer
 
 set -euo pipefail
@@ -102,12 +102,19 @@ deploy_symlinks() {
     [[ -f "$DOTFILES_DIR/ssh/config" ]] && ln -sf "$DOTFILES_DIR/ssh/config" "$HOME/.ssh/config"
 }
 
-# Deploy dotfiles
+# ── Deploy dotfiles ────────────────────────────────────────────────
 if confirm "Deploy dotfiles configuration?"; then
     log "Deploying dotfiles..."
+
     if command -v stow &> /dev/null && [[ "$FORCE_YES" == false ]]; then
         log "Using stow to manage symlinks"
-        stow -v --target="$HOME" bash zsh git tmux vim nvim ssh
+        for pkg in bash zsh git tmux vim nvim ssh; do
+            if [[ -d "$DOTFILES_DIR/$pkg" ]]; then
+                stow --target="$HOME" "$pkg"
+            else
+                warn "Package '$pkg' not found – skipped"
+            fi
+        done
     else
         log "Using manual symlink deployment"
         deploy_symlinks
