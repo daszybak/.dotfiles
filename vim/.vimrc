@@ -20,9 +20,8 @@ set smartcase               " ...unless uppercase used
 set incsearch               " Show match while typing
 set hlsearch                " Highlight matches
 
-" Clipboard (only works if Vim is compiled with +clipboard)
-if has("clipboard")
-  set clipboard=unnamedplus
+if has('clipboard') && (!empty($DISPLAY) || has('mac') || has('gui_running'))
+    set clipboard=unnamedplus
 endif
 
 " File handling
@@ -44,5 +43,45 @@ endif
 
 " Detect Makefiles and force tabs
 autocmd FileType make set noexpandtab tabstop=8 shiftwidth=8 softtabstop=0
+
+let mapleader = " "
+
+xnoremap y "+y
+nnoremap y "+y
+nnoremap y "+y
+vnoremap y "+y
+nnoremap d "+d
+vnoremap d "+d
+nnoremap p "+p
+vnoremap p "+p
+
+call plug#begin('~/.vim/plugged')
+
+" Fuzzy finder
+Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+Plug 'junegunn/fzf.vim'
+
+" File explorer
+Plug 'preservim/nerdtree'
+
+" Optional: Icons (if your terminal supports them)
+Plug 'ryanoasis/vim-devicons'
+
+" Optional: Statusline
+Plug 'vim-airline/vim-airline'
+
+call plug#end()
+
+" NERDTree toggle
+nnoremap <Leader>n :NERDTreeToggle<CR>
+
+" Fuzzy file finder
+nnoremap <C-p> :Files<CR>
+
+" Fuzzy grep
+nnoremap <Leader>g :Rg<CR>
+
+" Change directory to project root (git root)
+autocmd BufEnter * silent! lcd `git rev-parse --show-toplevel 2>/dev/null`
 
 

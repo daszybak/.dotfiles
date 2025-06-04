@@ -78,12 +78,12 @@ cd "$DOTFILES_DIR"
 
 # Backup existing dotfiles
 backup_files() {
-    local files=(".bashrc" ".zshrc" ".gitconfig" ".vimrc" ".tmux.conf" ".config/nvim" ".ssh/config")
+    local files=(".bashrc" ".zshrc" ".gitconfig" ".vimrc" ".tmux.conf")
     mkdir -p "$BACKUP_DIR"
     for file in "${files[@]}"; do
         if [[ -e "$HOME/$file" && ! -L "$HOME/$file" ]]; then
             log "Backing up $file to $BACKUP_DIR"
-            cp -r "$HOME/$file" "$BACKUP_DIR/"
+            mv "$HOME/$file" "$BACKUP_DIR/"
         fi
     done
 }
@@ -110,7 +110,7 @@ if confirm "Deploy dotfiles configuration?"; then
         log "Using stow to manage symlinks"
         for pkg in bash zsh git tmux vim nvim ssh; do
             if [[ -d "$DOTFILES_DIR/$pkg" ]]; then
-                stow --target="$HOME" "$pkg"
+	    	stow --adopt --target="$HOME" "$pkg" || warn "Conflict detected with '$pkg'. Resolve manually."
             else
                 warn "Package '$pkg' not found – skipped"
             fi
