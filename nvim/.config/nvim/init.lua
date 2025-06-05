@@ -996,7 +996,7 @@ require("lazy").setup({
 			lazy = false, -- neo-tree will lazily load itself
 			keys = {
 				{
-					"<C-n>",
+					"<leader>n",
 					function()
 						require("neo-tree.command").execute({ toggle = true })
 					end,
