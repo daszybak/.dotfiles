@@ -91,7 +91,7 @@ vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
@@ -109,6 +109,12 @@ vim.o.mouse = "a"
 
 -- Don't show the mode, since it's already in the status line
 vim.o.showmode = false
+
+-- keep swap off (repo stay clean) but persist undo
+vim.o.swapfile = false
+
+vim.o.undofile = true
+vim.o.undodir = vim.fn.stdpath("state") .. "/undo//" -- // = auto sub-dirs
 
 -- Sync clipboard between OS and Neovim.
 --  Schedule the setting after `UiEnter` because it can increase startup-time.
@@ -687,7 +693,34 @@ require("lazy").setup({
 			--        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
 			local servers = {
 				-- clangd = {},
-				-- gopls = {},
+				gopls = {
+					settings = {
+						gopls = {
+							directoryFilters = {
+								"+target",
+							},
+							gofumpt = true,
+							["ui.semanticTokens"] = true,
+							analyses = {
+								unusedparams = true,
+								shadow = true, -- detect variable shadowing
+								nilness = true, -- detect redundant or impossible nil checks
+								unusedwrite = true, -- detect unused writes to struct fields
+								unreachable = true, -- detect unreachable code
+							},
+							codelenses = {
+								references = true,
+							},
+							staticcheck = true, -- enable additional diagnostics
+							hoverKind = "FullDocumentation", -- full docs in hover popup
+							completeUnimported = true, -- suggest imports for completions
+							usePlaceholders = true, -- auto-fill function parameters
+							linksInHover = true, -- clickable links in hover
+							verboseOutput = false, -- can be turned on for debugging
+						},
+					},
+				},
+
 				-- pyright = {},
 				-- rust_analyzer = {},
 				-- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
@@ -891,25 +924,58 @@ require("lazy").setup({
 		},
 	},
 
-	{ -- You can easily change to a different colorscheme.
-		-- Change the name of the colorscheme plugin below, and then
-		-- change the command in the config to whatever the name of that colorscheme is.
-		--
-		-- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-		"folke/tokyonight.nvim",
-		priority = 1000, -- Make sure to load this before all the other start plugins.
+	-- { -- You can easily change to a different colorscheme.
+	-- Change the name of the colorscheme plugin below, and then
+	-- change the command in the config to whatever the name of that colorscheme is.
+	--
+	-- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
+	-- "folke/tokyonight.nvim",
+	-- priority = 1000, -- Make sure to load this before all the other start plugins.
+	-- config = function()
+	-- ---@diagnostic disable-next-line: missing-fields
+	-- require("tokyonight").setup({
+	-- styles = {
+	-- comments = { italic = false }, -- Disable italics in comments
+	-- },
+	-- })
+
+	-- Load the colorscheme here.
+	-- Like many other themes, this one has different styles, and you could load
+	-- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
+	--vim.cmd.colorscheme("tokyonight-night")
+	-- end,
+	-- },
+	--
+	{
+		"nvim-lualine/lualine.nvim",
+		dependencies = { "nvim-tree/nvim-web-devicons" },
+		priority = 1001, -- Load before other UI plugins
 		config = function()
-			---@diagnostic disable-next-line: missing-fields
-			require("tokyonight").setup({
-				styles = {
-					comments = { italic = false }, -- Disable italics in comments
+			require("lualine").setup({
+				opts = {
+					theme = "catppuccin",
+				},
+			})
+		end,
+	},
+	{
+		"catppuccin/nvim",
+		name = "catppuccin",
+		priority = 1000, -- Load before other UI plugins
+		config = function()
+			require("catppuccin").setup({
+				flavour = "frappe", -- soft gray-dark flavor
+				integrations = {
+					cmp = true,
+					gitsigns = true,
+					treesitter = true,
+					telescope = true,
+					notify = true,
+					mini = true,
 				},
 			})
 
-			-- Load the colorscheme here.
-			-- Like many other themes, this one has different styles, and you could load
-			-- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-			vim.cmd.colorscheme("tokyonight-night")
+			vim.cmd.colorscheme("catppuccin")
 		end,
 	},
 
