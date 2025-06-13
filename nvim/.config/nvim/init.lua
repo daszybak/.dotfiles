@@ -257,6 +257,7 @@ rtp:prepend(lazypath)
 -- NOTE: Here is where you install your plugins.
 require("lazy").setup({
 	-- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
+	--
 	--"NMAC427/guess-indent.nvim", -- Detect tabstop and shiftwidth automatically
 
 	-- NOTE: Plugins can also be added by using a table,
@@ -360,6 +361,20 @@ require("lazy").setup({
 			},
 		},
 	},
+  {
+  "nvim-pack/nvim-spectre",
+  cmd = "Spectre",                 -- lazy-load on :Spectre
+  keys = {
+    { "<leader>S", function() require("spectre").toggle() end,
+      desc = "Search/Replace (Spectre)" },
+  },
+  opts = {
+    open_cmd = "noswapfile vnew",  -- open in a vertical split
+    line_sep_start = "╭─",         -- nicer borders (optional)
+    result_padding = " ",
+  },
+  dependencies = { "nvim-lua/plenary.nvim" }, -- already in Kickstart
+},
 
 	-- NOTE: Plugins can specify dependencies.
 	--
@@ -696,9 +711,11 @@ require("lazy").setup({
 				gopls = {
 					settings = {
 						gopls = {
-							directoryFilters = {
-								"+target",
-							},
+              directoryFilters = {
+                "-.git",
+                "-**/node_modules",
+                "+target"
+              },
 							gofumpt = true,
 							["ui.semanticTokens"] = true,
 							analyses = {
@@ -768,19 +785,15 @@ require("lazy").setup({
 			require("mason-tool-installer").setup({ ensure_installed = ensure_installed })
 
 			require("mason-lspconfig").setup({
-				ensure_installed = {}, -- explicitly set to an empty table (Kickstart populates installs via mason-tool-installer)
-				automatic_installation = false,
-				handlers = {
-					function(server_name)
-						local server = servers[server_name] or {}
-						-- This handles overriding only values explicitly passed
-						-- by the server configuration above. Useful when disabling
-						-- certain features of an LSP (for example, turning off formatting for ts_ls)
-						server.capabilities = vim.tbl_deep_extend("force", {}, capabilities, server.capabilities or {})
-						require("lspconfig")[server_name].setup(server)
-					end,
-				},
+				ensure_installed = { "gopls" }, -- ask Mason to install these
+				automatic_installation = true,   -- and auto-install missing ones
 			})
+
+			-- Apply our custom configurations using the new LSP API (Neovim 0.11+)
+			for server_name, config in pairs(servers) do
+				config.capabilities = vim.tbl_deep_extend("force", {}, capabilities, config.capabilities or {})
+				vim.lsp.config(server_name, config)
+			end
 		end,
 	},
 
@@ -800,20 +813,21 @@ require("lazy").setup({
 		},
 		opts = {
 			notify_on_error = false,
-			format_on_save = function(bufnr)
-				-- Disable "format_on_save lsp_fallback" for languages that don't
-				-- have a well standardized coding style. You can add additional
-				-- languages here or re-enable it for the disabled ones.
-				local disable_filetypes = { c = true, cpp = true }
-				if disable_filetypes[vim.bo[bufnr].filetype] then
-					return nil
-				else
-					return {
-						timeout_ms = 500,
-						lsp_format = "fallback",
-					}
-				end
-			end,
+			--format_on_save = function(bufnr)
+			--	-- Disable "format_on_save lsp_fallback" for languages that don't
+			--	-- have a well standardized coding style. You can add additional
+			--	-- languages here or re-enable it for the disabled ones.
+			--	local disable_filetypes = { c = true, cpp = true }
+			--	if disable_filetypes[vim.bo[bufnr].filetype] then
+			--		return nil
+			--	else
+			--		return {
+			--			timeout_ms = 500,
+			--			lsp_format = "fallback",
+			--		}
+			--	end
+			--end,
+			format_on_save = false,
 			formatters_by_ft = {
 				lua = { "stylua" },
 				-- Conform can also run multiple formatters sequentially
@@ -1052,7 +1066,7 @@ require("lazy").setup({
 				--  the list of additional_vim_regex_highlighting and disabled languages for indent.
 				additional_vim_regex_highlighting = { "ruby" },
 			},
-			indent = { enable = true, disable = { "ruby" } },
+			indent = { enable = false, disable = { "ruby", "jsx", "tsx", "javascript", "typescript" } },
 		},
 		{
 			"nvim-neo-tree/neo-tree.nvim",
