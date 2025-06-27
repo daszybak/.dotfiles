@@ -108,7 +108,7 @@ if confirm "Deploy dotfiles configuration?"; then
 
     if command -v stow &> /dev/null && [[ "$FORCE_YES" == false ]]; then
         log "Using stow to manage symlinks"
-        for pkg in bash zsh git tmux vim nvim ssh skhd aerospace; do
+        for pkg in bash zsh git tmux vim nvim ssh skhd yabai aerospace; do
             if [[ -d "$DOTFILES_DIR/$pkg" ]]; then
 	    	stow --adopt --target="$HOME" "$pkg" || warn "Conflict detected with '$pkg'. Resolve manually."
             else
