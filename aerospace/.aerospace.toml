@@ -1,0 +1,50 @@
+# ----------------------------------------------------------
+#  CAPS-as-Hyper + Vim-style movement – AeroSpace edition
+# ----------------------------------------------------------
+
+[mode.main.binding]
+
+# ── Basic window focus (⇪ + h/j/k/l) ───────────────────────
+fn-h = "focus left"
+fn-j = "focus down"
+fn-k = "focus up"
+fn-l = "focus right"
+
+# ── Swap / move windows (⇪ + ⇧ + h/j/k/l) ─────────────────
+shift-fn-h = "move left"
+shift-fn-j = "move down"
+shift-fn-k = "move up"
+shift-fn-l = "move right"
+
+# ── Resize windows (⇪ + Ctrl + h/j/k/l) ───────────────────
+ctrl-fn-h = "resize width  -20"
+ctrl-fn-l = "resize width  +20"
+ctrl-fn-k = "resize height -20"
+ctrl-fn-j = "resize height +20"
+
+# ── Balance / float / fullscreen ──────────────────────────
+fn-space  = "balance-sizes"          # re-even gaps
+fn-enter  = "layout floating tiling" # toggle float
+fn-f      = "fullscreen"             # toggle fullscreen
+
+# ── Workspace navigation (⇪ + ⌥ + 1-5) ───────────────────
+alt-fn-1 = "workspace 1"
+alt-fn-2 = "workspace 2"
+alt-fn-3 = "workspace 3"
+alt-fn-4 = "workspace 4"
+alt-fn-5 = "workspace 5"
+
+# ── Send window to workspace (⇪ + ⌥ + ⇧ + 1-5) ───────────
+alt-shift-fn-1 = ["move-node-to-workspace 1", "workspace 1"]
+alt-shift-fn-2 = ["move-node-to-workspace 2", "workspace 2"]
+alt-shift-fn-3 = ["move-node-to-workspace 3", "workspace 3"]
+alt-shift-fn-4 = ["move-node-to-workspace 4", "workspace 4"]
+alt-shift-fn-5 = ["move-node-to-workspace 5", "workspace 5"]
+
+# ── Monitor focus (⇪ + ⌘ + n/p) ──────────────────────────
+cmd-fn-n = "focus-monitor next"
+cmd-fn-p = "focus-monitor prev"
+
+# ── Send window to monitor (⇪ + ⌘ + ⇧ + n/p) ─────────────
+shift-cmd-fn-n = "move-node-to-monitor --wrap-around next"
+shift-cmd-fn-p = "move-node-to-monitor --wrap-around prev"
