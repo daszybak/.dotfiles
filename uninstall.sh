@@ -15,7 +15,7 @@ read -rp "Proceed? [y/N] " ans
 
 # ── Unstow dotfiles ────────────────────────────────────────────────
 if command -v stow &> /dev/null; then
-    for pkg in bash zsh git tmux vim ssh skhd yabai aerospace; do
+    for pkg in bash zsh git tmux vim ssh; do
         if [[ -d "$DOTFILES_DIR/$pkg" ]]; then
             log "Unstowing $pkg from $HOME"
             stow -D --target="$HOME" "$pkg" || warn "Unstow failed for $pkg"

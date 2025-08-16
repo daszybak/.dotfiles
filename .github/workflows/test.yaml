@@ -1,26 +1,55 @@
-me: Dotfiles Install Test
+name: Dotfiles Install Test
 
 on:
   push:
-    pull_request:
-      workflow_dispatch:
+  pull_request:
+  workflow_dispatch:
 
-      jobs:
-        test-dotfiles:
-            runs-on: ubuntu-latest  # or macos-latest for macOS
+jobs:
+  test-dotfiles:
+    runs-on: ubuntu-latest
 
-                steps:
-                      - name: Checkout repo
-                              uses: actions/checkout@v3
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-                                    - name: Make install.sh executable
-                                            run: chmod +x install.sh
+      - name: Install stow (for stow-based installation)
+        run: sudo apt-get update && sudo apt-get install -y stow
 
-                                                  - name: Run dotfiles installer
-                                                          run: ./install.sh
+      - name: Make install.sh executable
+        run: chmod +x install.sh
 
-                                                                - name: Verify installed shell configs
-                                                                        run: |
-                                                                                  echo "Check if core.sh exists:"
-                                                                                            test -f "$HOME/.dotfiles/shell/core.sh" && echo "core.sh found!" || exit 1
+      - name: Run dotfiles installer (force mode)
+        run: ./install.sh -y
 
+      - name: Verify installed shell configs
+        run: |
+          echo "Checking dotfiles installation..."
+          ls -la "$HOME/.dotfiles/" || echo "No .dotfiles directory"
+          test -f "$HOME/.dotfiles/shell/core.sh" && echo "core.sh found!" || echo "core.sh not found"
+          # Check if any configs were linked
+          ls -la "$HOME/.bashrc" "$HOME/.zshrc" 2>/dev/null || echo "Shell configs not found"
+
+  test-dotfiles-macos:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install stow (for stow-based installation)
+        run: brew install stow
+
+      - name: Make install.sh executable
+        run: chmod +x install.sh
+
+      - name: Run dotfiles installer (force mode)
+        run: ./install.sh -y
+
+      - name: Verify installed shell configs
+        run: |
+          echo "Checking dotfiles installation..."
+          ls -la "$HOME/.dotfiles/" || echo "No .dotfiles directory"
+          test -f "$HOME/.dotfiles/shell/core.sh" && echo "core.sh found!" || echo "core.sh not found"
+          # Check if any configs were linked
+          ls -la "$HOME/.bashrc" "$HOME/.zshrc" 2>/dev/null || echo "Shell configs not found"

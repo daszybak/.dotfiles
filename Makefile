@@ -1,6 +1,6 @@
 reload:
-	-bash uninstall.sh
-	-bash install.sh
+	-bash uninstall.sh -y
+	-bash install.sh -y
 
 install:
 	bash install.sh

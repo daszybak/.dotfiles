@@ -91,32 +91,64 @@ backup_files
 
 # Deploy dotfiles (fallback if stow not used)
 deploy_symlinks() {
-    ln -sf "$DOTFILES_DIR/bash/.bashrc" "$HOME/.bashrc"
-    ln -sf "$DOTFILES_DIR/zsh/.zshrc" "$HOME/.zshrc"
-    ln -sf "$DOTFILES_DIR/git/.gitconfig" "$HOME/.gitconfig"
-    ln -sf "$DOTFILES_DIR/tmux/.tmux.conf" "$HOME/.tmux.conf"
-    ln -sf "$DOTFILES_DIR/vim/.vimrc" "$HOME/.vimrc"
-    mkdir -p "$HOME/.config"
-    ln -sf "$DOTFILES_DIR/nvim" "$HOME/.config/nvim"
-    mkdir -p "$HOME/.ssh"
-    [[ -f "$DOTFILES_DIR/ssh/config" ]] && ln -sf "$DOTFILES_DIR/ssh/config" "$HOME/.ssh/config"
+    log "Creating symlinks manually..."
+    
+    # Bash configuration
+    [[ -f "$DOTFILES_DIR/bash/.bashrc" ]] && ln -sf "$DOTFILES_DIR/bash/.bashrc" "$HOME/.bashrc" && log "Linked .bashrc"
+    
+    # Zsh configuration
+    [[ -f "$DOTFILES_DIR/zsh/.zshrc" ]] && ln -sf "$DOTFILES_DIR/zsh/.zshrc" "$HOME/.zshrc" && log "Linked .zshrc"
+    
+    # Git configuration
+    [[ -f "$DOTFILES_DIR/git/.gitconfig" ]] && ln -sf "$DOTFILES_DIR/git/.gitconfig" "$HOME/.gitconfig" && log "Linked .gitconfig"
+    
+    # Tmux configuration
+    [[ -f "$DOTFILES_DIR/tmux/.tmux.conf" ]] && ln -sf "$DOTFILES_DIR/tmux/.tmux.conf" "$HOME/.tmux.conf" && log "Linked .tmux.conf"
+    
+    # Vim configuration
+    [[ -f "$DOTFILES_DIR/vim/.vimrc" ]] && ln -sf "$DOTFILES_DIR/vim/.vimrc" "$HOME/.vimrc" && log "Linked .vimrc"
+    
+    # Neovim configuration
+    if [[ -d "$DOTFILES_DIR/nvim" ]]; then
+        mkdir -p "$HOME/.config"
+        ln -sf "$DOTFILES_DIR/nvim" "$HOME/.config/nvim" && log "Linked neovim config"
+    fi
+    
+    # SSH configuration
+    if [[ -f "$DOTFILES_DIR/ssh/config" ]]; then
+        mkdir -p "$HOME/.ssh"
+        ln -sf "$DOTFILES_DIR/ssh/config" "$HOME/.ssh/config" && log "Linked SSH config"
+    fi
 }
 
 # ── Deploy dotfiles ────────────────────────────────────────────────
 if confirm "Deploy dotfiles configuration?"; then
     log "Deploying dotfiles..."
 
-    if command -v stow &> /dev/null && [[ "$FORCE_YES" == false ]]; then
-        log "Using stow to manage symlinks"
-        for pkg in bash zsh git tmux vim nvim ssh skhd yabai aerospace; do
-            if [[ -d "$DOTFILES_DIR/$pkg" ]]; then
-	    	stow --adopt --target="$HOME" "$pkg" || warn "Conflict detected with '$pkg'. Resolve manually."
-            else
-                warn "Package '$pkg' not found – skipped"
+    if command -v stow &> /dev/null; then
+        if [[ "$FORCE_YES" == true ]] || confirm "Use stow for managing symlinks?"; then
+            log "Using stow to manage symlinks"
+            for pkg in bash zsh git tmux vim ssh; do
+                if [[ -d "$DOTFILES_DIR/$pkg" ]]; then
+                    log "Stowing package: $pkg"
+                    stow --adopt --target="$HOME" "$pkg" || warn "Conflict detected with '$pkg'. Resolve manually."
+                else
+                    warn "Package '$pkg' not found – skipped"
+                fi
+            done
+            
+            # Handle nvim separately since it goes to ~/.config
+            if [[ -d "$DOTFILES_DIR/nvim" ]]; then
+                log "Stowing nvim to ~/.config"
+                mkdir -p "$HOME/.config"
+                ln -sf "$DOTFILES_DIR/nvim" "$HOME/.config/nvim" && log "Linked neovim config"
             fi
-        done
+        else
+            log "Using manual symlink deployment"
+            deploy_symlinks
+        fi
     else
-        log "Using manual symlink deployment"
+        log "Stow not found, using manual symlink deployment"
         deploy_symlinks
     fi
 fi
@@ -127,5 +159,42 @@ fi
 # It handles folders modularly and is easily reversible (stow -D)
 # In force mode we skip stow to avoid external dependencies
 
-log "Dotfiles installation complete. Restart your shell or source ~/.bashrc or ~/.zshrc"
+# ── Source shell configuration ────────────────────────────────────────
+log "Dotfiles installation complete!"
+
+if [[ "$INTERACTIVE" == true ]] && confirm "Source shell configuration now?"; then
+    # Detect current shell and source appropriate config
+    case "$SHELL" in
+        */zsh)
+            if [[ -f "$HOME/.zshrc" ]]; then
+                log "Sourcing .zshrc..."
+                # Note: source in subshell to avoid exit on error
+                (source "$HOME/.zshrc" 2>/dev/null) && log "Successfully sourced .zshrc" || warn "Error sourcing .zshrc"
+            fi
+            ;;
+        */bash)
+            if [[ -f "$HOME/.bashrc" ]]; then
+                log "Sourcing .bashrc..."
+                (source "$HOME/.bashrc" 2>/dev/null) && log "Successfully sourced .bashrc" || warn "Error sourcing .bashrc"
+            fi
+            ;;
+        *)
+            warn "Unknown shell: $SHELL"
+            ;;
+    esac
+    
+    log "Configuration loaded! Open a new terminal or run 'exec \$SHELL' to reload completely."
+else
+    log "Restart your shell or run 'exec \$SHELL' to load the new configuration"
+fi
+
+# ── Optional: Install Language Servers ────────────────────────────────────
+if [[ "$INTERACTIVE" == true ]] && confirm "Install language servers for development?"; then
+    if [[ -x "$DOTFILES_DIR/scripts/install-language-servers.sh" ]]; then
+        log "Running language server installer..."
+        "$DOTFILES_DIR/scripts/install-language-servers.sh"
+    else
+        warn "Language server installer not found or not executable"
+    fi
+fi
 

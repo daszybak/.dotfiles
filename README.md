@@ -1,4 +1,5 @@
 ??? from here until ???END lines may have been inserted/deleted
+
 # 🛠️ daszybak's Dotfiles
 
 Minimal, cross-platform dotfiles for **macOS**, **Linux**, and **WSL2**.  
@@ -8,10 +9,12 @@ Includes:
 
 - 🐚 Shell support: Bash + Zsh
 - 🧩 Modular config loading: `~/.config/shell/`
-- ✏️ Vim with sensible defaults
+- ✏️ Vim + Neovim with sensible defaults
 - 🖥️ Tmux config with clipboard support (macOS, WSL)
-- 🧬 Optional `stow`-based layout (skipped in `--yes` mode)
+- 🧬 Smart deployment: `stow` or native symlinks
 - 🔐 Native GPG-based encryption for secrets like `.ssh/config.local`
+- ⚡ Auto-sourcing of shell configs on completion
+- 🔧 Interactive language server installer for development
 
 ---
 
@@ -30,6 +33,7 @@ curl -fsSL https://raw.githubusercontent.com/daszybak/.dotfiles/main/install.sh 
 ```
 
 ### 🔹 Manual clone & run
+
 ```bash
 git clone git@github.com:daszybak/.dotfiles.git ~/.dotfiles
 cd ~/.dotfiles
@@ -41,21 +45,23 @@ cd ~/.dotfiles
 ```text
 .dotfiles/
 ├── install.sh             # Cross-platform setup script
+├── scripts/
+│   └── install-language-servers.sh  # Interactive LSP installer
 ├── bash/.bashrc           # Bash config
 ├── zsh/.zshrc             # Zsh config
 ├── vim/.vimrc             # Lean Vim setup
+├── nvim/                  # Neovim configuration
 ├── tmux/.tmux.conf        # Tmux with platform-specific clipboard
-├── shell/
-│   ├── core.sh
-│   ├── aliases.sh
-│   ├── exports.sh
-│   ├── functions.sh
-│   └── platforms/
-│       ├── linux.sh
-│       ├── macos.sh
-│       ├── windows.sh
-│       └── wsl.sh
-└── secrets/               # GPG-encrypted files (e.g. .ssh/config.local)
+└── shell/
+    ├── core.sh
+    ├── aliases.sh
+    ├── exports.sh
+    ├── functions.sh
+    └── platforms/
+        ├── linux.sh
+        ├── macos.sh
+        ├── windows.sh
+        └── wsl.sh
 ```
 
 ## 🛣️ Roadmap
@@ -64,29 +70,47 @@ cd ~/.dotfiles
 
 - [x] Modular shell setup using `~/.config/shell/`
 - [x] Platform-specific overrides using `uname` and auto-detection
-- [x] Manual symlink fallback (avoids requiring `stow` in `--yes` mode)
+- [x] Smart deployment: `stow` or native symlinks with user choice
 - [x] Backup of existing dotfiles before overwriting
 - [x] GPG-based encryption for sensitive dotfiles
 - [x] `.ssh/config.local` decryption on install if present
+- [x] Auto-sourcing of shell configurations on completion
+- [x] Interactive language server installer for development
+- [x] Cleaned up window managers (removed yabai, skhd, aerospace)
+- [x] Fixed GitHub Actions workflow
+
+### 🧩 Language Server Support
+
+The interactive language server installer (`scripts/install-language-servers.sh`) supports:
+
+- **C/C++**: clangd
+- **Python**: pyright (Microsoft) or pylsp (community)
+- **TypeScript/JavaScript**: typescript-language-server
+- **Rust**: rust-analyzer
+- **Go**: gopls
+- **Lua**: lua-language-server
+- **Bash**: bash-language-server
+- **YAML/JSON**: yaml-language-server, json-language-server
+
+Also recommends modern alternatives like:
+
+- [asdf](https://asdf-vm.com/) - Universal version manager
+- [mise](https://mise.jdx.dev/) - Modern replacement for asdf
+- [Mason.nvim](https://github.com/williamboman/mason.nvim) - For Neovim users
 
 ### 🧩 Planned Improvements
 
 - [ ] Add support for `.bashrc.local` / `.zshrc.local` overrides
 - [ ] Integrate Git credential helper config (`~/.git-credentials`)
-- [ ] Add Makefile targets:
-  - [ ] `make decrypt` – decrypt secrets
-  - [ ] `make encrypt` – encrypt secrets
-  - [ ] `make bootstrap` – end-to-end system setup
-  - [ ] `make clean` – remove symlinks and backups
 - [ ] Optional remote provisioning (e.g., via SSH or cloud-init)
 - [ ] Add support for restoring configs like:
   - [ ] `~/.gnupg`
   - [ ] `~/.netrc`
   - [ ] `~/.aws/config`
   - [ ] `~/.docker/config.json`
-- [ ] Fix Github Actions
 
 ## 💡 Philosophy
+
 - 📦 No global dependencies — native tools only
 - 💥 Safe to run repeatedly
 - 🧽 Reversible, debuggable, and modular
@@ -94,4 +118,3 @@ cd ~/.dotfiles
 
 📎 License
 MIT — use freely, customize as needed.
-
