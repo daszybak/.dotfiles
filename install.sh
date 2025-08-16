@@ -64,11 +64,23 @@ case "$(uname -s)" in
 esac
 log "Platform detected: $PLATFORM"
 
-# Clone dotfiles repo
+# Clone dotfiles repo or use current directory if already in dotfiles
 if [[ ! -d "$DOTFILES_DIR" ]]; then
-    if confirm "Clone dotfiles repository?"; then
+    # Check if we're already in a dotfiles directory (for CI/development)
+    if [[ "$(basename "$PWD")" == ".dotfiles" && -f "$PWD/install.sh" ]]; then
+        log "Already in dotfiles directory, using current location"
+        DOTFILES_DIR="$PWD"
+    elif confirm "Clone dotfiles repository?"; then
         log "Cloning dotfiles..."
         git clone "$DOTFILES_REPO" "$DOTFILES_DIR" || error "Failed to clone repository"
+    elif [[ "$FORCE_YES" == true ]]; then
+        # In force mode, if we can't clone and we're not in dotfiles dir, try current dir
+        if [[ -f "$PWD/install.sh" ]]; then
+            log "Force mode: using current directory as dotfiles"
+            DOTFILES_DIR="$PWD"
+        else
+            error "Cannot determine dotfiles location in force mode"
+        fi
     else
         error "Dotfiles repository required"
     fi

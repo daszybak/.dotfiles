@@ -6,50 +6,62 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-dotfiles:
+    test-dotfiles:
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-
+        
       - name: Install stow (for stow-based installation)
         run: sudo apt-get update && sudo apt-get install -y stow
-
+        
       - name: Make install.sh executable
         run: chmod +x install.sh
-
+        
       - name: Run dotfiles installer (force mode)
         run: ./install.sh -y
-
+        
       - name: Verify installed shell configs
         run: |
           echo "Checking dotfiles installation..."
-          ls -la "$HOME/.dotfiles/" || echo "No .dotfiles directory"
-          test -f "$HOME/.dotfiles/shell/core.sh" && echo "core.sh found!" || echo "core.sh not found"
-          # Check if any configs were linked
+          echo "DOTFILES_DIR location:"
+          ls -la "$HOME/.dotfiles/" 2>/dev/null || ls -la "$GITHUB_WORKSPACE/" || echo "Cannot find dotfiles"
+          echo "Checking for shell core:"
+          test -f "$HOME/.dotfiles/shell/core.sh" && echo "core.sh found in ~/.dotfiles!" || \
+          test -f "$GITHUB_WORKSPACE/shell/core.sh" && echo "core.sh found in workspace!" || \
+          echo "core.sh not found"
+          echo "Checking symlinks:"
           ls -la "$HOME/.bashrc" "$HOME/.zshrc" 2>/dev/null || echo "Shell configs not found"
+          echo "Checking nvim config:"
+          ls -la "$HOME/.config/nvim" 2>/dev/null || echo "nvim config not found"
 
-  test-dotfiles-macos:
+    test-dotfiles-macos:
     runs-on: macos-latest
-
+    
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-
+        
       - name: Install stow (for stow-based installation)
         run: brew install stow
-
+        
       - name: Make install.sh executable
         run: chmod +x install.sh
-
+        
       - name: Run dotfiles installer (force mode)
         run: ./install.sh -y
-
+        
       - name: Verify installed shell configs
         run: |
           echo "Checking dotfiles installation..."
-          ls -la "$HOME/.dotfiles/" || echo "No .dotfiles directory"
-          test -f "$HOME/.dotfiles/shell/core.sh" && echo "core.sh found!" || echo "core.sh not found"
-          # Check if any configs were linked
+          echo "DOTFILES_DIR location:"
+          ls -la "$HOME/.dotfiles/" 2>/dev/null || ls -la "$GITHUB_WORKSPACE/" || echo "Cannot find dotfiles"
+          echo "Checking for shell core:"
+          test -f "$HOME/.dotfiles/shell/core.sh" && echo "core.sh found in ~/.dotfiles!" || \
+          test -f "$GITHUB_WORKSPACE/shell/core.sh" && echo "core.sh found in workspace!" || \
+          echo "core.sh not found"
+          echo "Checking symlinks:"
           ls -la "$HOME/.bashrc" "$HOME/.zshrc" 2>/dev/null || echo "Shell configs not found"
+          echo "Checking nvim config:"
+          ls -la "$HOME/.config/nvim" 2>/dev/null || echo "nvim config not found"
