@@ -6,22 +6,22 @@ on:
   workflow_dispatch:
 
 jobs:
-    test-dotfiles:
+  test-dotfiles:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-        
+
       - name: Install stow (for stow-based installation)
         run: sudo apt-get update && sudo apt-get install -y stow
-        
+
       - name: Make install.sh executable
         run: chmod +x install.sh
-        
+
       - name: Run dotfiles installer (force mode)
         run: ./install.sh -y
-        
+
       - name: Verify installed shell configs
         run: |
           echo "Checking dotfiles installation..."
@@ -36,22 +36,22 @@ jobs:
           echo "Checking nvim config:"
           ls -la "$HOME/.config/nvim" 2>/dev/null || echo "nvim config not found"
 
-    test-dotfiles-macos:
+  test-dotfiles-macos:
     runs-on: macos-latest
-    
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-        
+
       - name: Install stow (for stow-based installation)
         run: brew install stow
-        
+
       - name: Make install.sh executable
         run: chmod +x install.sh
-        
+
       - name: Run dotfiles installer (force mode)
         run: ./install.sh -y
-        
+
       - name: Verify installed shell configs
         run: |
           echo "Checking dotfiles installation..."
