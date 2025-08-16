@@ -114,11 +114,7 @@ deploy_symlinks() {
         ln -sf "$DOTFILES_DIR/nvim" "$HOME/.config/nvim" && log "Linked neovim config"
     fi
     
-    # SSH configuration
-    if [[ -f "$DOTFILES_DIR/ssh/config" ]]; then
-        mkdir -p "$HOME/.ssh"
-        ln -sf "$DOTFILES_DIR/ssh/config" "$HOME/.ssh/config" && log "Linked SSH config"
-    fi
+
 }
 
 # ── Deploy dotfiles ────────────────────────────────────────────────
@@ -128,7 +124,7 @@ if confirm "Deploy dotfiles configuration?"; then
     if command -v stow &> /dev/null; then
         if [[ "$FORCE_YES" == true ]] || confirm "Use stow for managing symlinks?"; then
             log "Using stow to manage symlinks"
-            for pkg in bash zsh git tmux vim ssh; do
+            for pkg in bash zsh git tmux vim; do
                 if [[ -d "$DOTFILES_DIR/$pkg" ]]; then
                     log "Stowing package: $pkg"
                     stow --adopt --target="$HOME" "$pkg" || warn "Conflict detected with '$pkg'. Resolve manually."

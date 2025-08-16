@@ -15,7 +15,7 @@ read -rp "Proceed? [y/N] " ans
 
 # ── Unstow dotfiles ────────────────────────────────────────────────
 if command -v stow &> /dev/null; then
-    for pkg in bash zsh git tmux vim ssh; do
+    for pkg in bash zsh git tmux vim; do
         if [[ -d "$DOTFILES_DIR/$pkg" ]]; then
             log "Unstowing $pkg from $HOME"
             stow -D --target="$HOME" "$pkg" || warn "Unstow failed for $pkg"
@@ -40,7 +40,7 @@ remove_link() {
 
 for file in \
     "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.gitconfig" \
-    "$HOME/.tmux.conf" "$HOME/.vimrc" "$HOME/.ssh/config" \
+    "$HOME/.tmux.conf" "$HOME/.vimrc" \
     "$HOME/.config/nvim"
 do
     remove_link "$file"
