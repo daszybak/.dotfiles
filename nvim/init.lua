@@ -966,9 +966,12 @@ require("lazy").setup({
 		priority = 1001, -- Load before other UI plugins
 		config = function()
 			require("lualine").setup({
-				opts = {
+				options = {
 					theme = "catppuccin",
 				},
+        sections = {
+          lualine_c = { { "filename", path = 1  } }, -- 0=filename only, 1=relative, 2=absolute
+        },
 			})
 		end,
 	},
