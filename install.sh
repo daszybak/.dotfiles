@@ -196,19 +196,14 @@ install_packages() {
 }
 
 install_claude_code() {
-    log "Setting up Claude Code..."
+    log "Installing Claude Code..."
 
-    if ! command_exists npm && ! command_exists pnpm; then
-        warn "npm/pnpm not found. Install Node.js first to use Claude Code."
-        warn "Skipping Claude Code installation..."
+    if command_exists claude; then
+        log "Claude Code already installed"
         return 0
     fi
 
-    if command_exists pnpm; then
-        pnpm add -g @anthropic-ai/claude-code || true
-    elif command_exists npm; then
-        npm install -g @anthropic-ai/claude-code || true
-    fi
+    curl -fsSL https://claude.ai/install.sh | bash
 
     log "Claude Code installed. Run 'claude' to authenticate and start."
 }
