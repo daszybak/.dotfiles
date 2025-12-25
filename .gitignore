@@ -1,3 +1,13 @@
 secrets
 **/*.local
 
+# Claude Code runtime files
+claude/debug/
+claude/file-history/
+claude/history.jsonl
+claude/plugins/
+claude/projects/
+claude/shell-snapshots/
+claude/statsig/
+claude/todos/
+
