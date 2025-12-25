@@ -287,3 +287,4 @@ EOF
 alias zhelp='zj-help'
 alias zellij-help='zj-help'
 
+
