@@ -7,14 +7,14 @@ theme "catppuccin-frappe"
 // Default layout
 default_layout "compact"
 
-// Keyboard mode - tmux-like prefix with Ctrl+a
+// Keyboard mode - tmux-like prefix with Ctrl+b
 keybinds clear-defaults=true {
     // Global keybindings (work in all modes)
     shared_except "locked" {
-        bind "Ctrl a" { SwitchToMode "tmux"; }
+        bind "Ctrl b" { SwitchToMode "tmux"; }
     }
 
-    // tmux-like mode (after pressing Ctrl+a)
+    // tmux-like mode (after pressing Ctrl+b)
     tmux {
         bind "Esc" { SwitchToMode "Normal"; }
         bind "q" { SwitchToMode "Normal"; }

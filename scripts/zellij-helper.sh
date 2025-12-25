@@ -93,7 +93,7 @@ zj() {
         echo "Already inside Zellij session: $ZELLIJ_SESSION_NAME"
         echo ""
         echo "Commands:"
-        echo "  Ctrl+a d    - Detach from session"
+        echo "  Ctrl+b d    - Detach from session"
         echo "  zjls        - List all sessions"
         echo ""
         return 0
@@ -219,7 +219,7 @@ zj-help() {
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                    ZELLIJ CHEATSHEET (for tmux users)                        ║
 ╠══════════════════════════════════════════════════════════════════════════════╣
-║  PREFIX: Ctrl+a (just like your tmux config!)                                ║
+║  PREFIX: Ctrl+b (tmux default)                                               ║
 ╠══════════════════════════════════════════════════════════════════════════════╣
 ║                                                                              ║
 ║  SESSIONS (shell commands)                                                   ║
@@ -231,7 +231,7 @@ zj-help() {
 ║  zjkill <name>   Kill session (tmux kill-session -t)                         ║
 ║  zjkillall       Kill all sessions (tmux kill-server)                        ║
 ║                                                                              ║
-║  PANES (inside zellij: Ctrl+a, then...)                                      ║
+║  PANES (inside zellij: Ctrl+b, then...)                                      ║
 ║  ─────────────────────────────────────────────────────────────────────────── ║
 ║  |  or  v        Split vertically (right)                                    ║
 ║  -  or  s        Split horizontally (down)                                   ║
@@ -241,7 +241,7 @@ zj-help() {
 ║  h/j/k/l         Navigate panes (vim-style)                                  ║
 ║  H/J/K/L         Resize panes                                                ║
 ║                                                                              ║
-║  TABS (inside zellij: Ctrl+a, then...)                                       ║
+║  TABS (inside zellij: Ctrl+b, then...)                                       ║
 ║  ─────────────────────────────────────────────────────────────────────────── ║
 ║  c               New tab (tmux: c)                                           ║
 ║  n / p           Next/Previous tab                                           ║
@@ -249,7 +249,7 @@ zj-help() {
 ║  ,               Rename tab                                                  ║
 ║  w               Tab picker mode                                             ║
 ║                                                                              ║
-║  SCROLL/COPY (inside zellij: Ctrl+a, then...)                                ║
+║  SCROLL/COPY (inside zellij: Ctrl+b, then...)                                ║
 ║  ─────────────────────────────────────────────────────────────────────────── ║
 ║  [               Enter scroll mode (like copy-mode)                          ║
 ║  j/k             Scroll up/down                                              ║

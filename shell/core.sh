@@ -4,13 +4,18 @@
 # ── Shell options ────────────────────────────────────────────────────────────
 # Bash-specific options (won't error in zsh)
 if [[ -n "${BASH_VERSION:-}" ]]; then
+    # Works in all Bash versions
     shopt -s histappend      # Append to history file
     shopt -s checkwinsize    # Update LINES and COLUMNS
     shopt -s cdspell         # Autocorrect cd typos
-    shopt -s dirspell        # Autocorrect directory typos
-    shopt -s globstar        # Enable ** for recursive globbing
     shopt -s nocaseglob      # Case-insensitive globbing
-    shopt -s autocd          # cd into directory by typing its name
+
+    # Bash 4+ only options
+    if [[ "${BASH_VERSINFO[0]}" -ge 4 ]]; then
+        shopt -s dirspell    # Autocorrect directory typos
+        shopt -s globstar    # Enable ** for recursive globbing
+        shopt -s autocd      # cd into directory by typing its name
+    fi
 fi
 
 # ── Prompt ───────────────────────────────────────────────────────────────────

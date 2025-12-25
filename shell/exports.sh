@@ -53,7 +53,11 @@ if command -v fd &>/dev/null; then
 fi
 
 # ── Ripgrep ──────────────────────────────────────────────────────────────────
-export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/config"
+if [[ -f "$HOME/.config/ripgrep/config" ]]; then
+    export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/config"
+else
+    unset RIPGREP_CONFIG_PATH 2>/dev/null
+fi
 
 # ── Terminal ─────────────────────────────────────────────────────────────────
 export TERM="${TERM:-xterm-256color}"
