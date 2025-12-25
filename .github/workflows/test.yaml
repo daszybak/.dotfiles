@@ -7,61 +7,41 @@ on:
 
 jobs:
   test-dotfiles:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install stow (for stow-based installation)
-        run: sudo apt-get update && sudo apt-get install -y stow
-
-      - name: Make install.sh executable
-        run: chmod +x install.sh
-
       - name: Run dotfiles installer (force mode)
-        run: ./install.sh -y
-
-      - name: Verify installed shell configs
         run: |
-          echo "Checking dotfiles installation..."
-          echo "DOTFILES_DIR location:"
-          ls -la "$HOME/.dotfiles/" 2>/dev/null || ls -la "$GITHUB_WORKSPACE/" || echo "Cannot find dotfiles"
-          echo "Checking for shell core:"
-          test -f "$HOME/.dotfiles/shell/core.sh" && echo "core.sh found in ~/.dotfiles!" || \
-          test -f "$GITHUB_WORKSPACE/shell/core.sh" && echo "core.sh found in workspace!" || \
-          echo "core.sh not found"
-          echo "Checking symlinks:"
-          ls -la "$HOME/.bashrc" "$HOME/.zshrc" 2>/dev/null || echo "Shell configs not found"
-          echo "Checking nvim config:"
-          ls -la "$HOME/.config/nvim" 2>/dev/null || echo "nvim config not found"
+          chmod +x install.sh
+          ./install.sh -y
 
-  test-dotfiles-macos:
-    runs-on: macos-latest
-
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Install stow (for stow-based installation)
-        run: brew install stow
-
-      - name: Make install.sh executable
-        run: chmod +x install.sh
-
-      - name: Run dotfiles installer (force mode)
-        run: ./install.sh -y
-
-      - name: Verify installed shell configs
+      - name: Verify symlinks exist
         run: |
-          echo "Checking dotfiles installation..."
-          echo "DOTFILES_DIR location:"
-          ls -la "$HOME/.dotfiles/" 2>/dev/null || ls -la "$GITHUB_WORKSPACE/" || echo "Cannot find dotfiles"
-          echo "Checking for shell core:"
-          test -f "$HOME/.dotfiles/shell/core.sh" && echo "core.sh found in ~/.dotfiles!" || \
-          test -f "$GITHUB_WORKSPACE/shell/core.sh" && echo "core.sh found in workspace!" || \
-          echo "core.sh not found"
-          echo "Checking symlinks:"
-          ls -la "$HOME/.bashrc" "$HOME/.zshrc" 2>/dev/null || echo "Shell configs not found"
-          echo "Checking nvim config:"
-          ls -la "$HOME/.config/nvim" 2>/dev/null || echo "nvim config not found"
+          set -e
+          echo "=== Checking symlinks ==="
+
+          # Config directory symlinks (these should always be created)
+          test -L "$HOME/.config/nvim" || { echo "FAIL: ~/.config/nvim not a symlink"; exit 1; }
+          test -L "$HOME/.config/zellij" || { echo "FAIL: ~/.config/zellij not a symlink"; exit 1; }
+          test -L "$HOME/.config/shell" || { echo "FAIL: ~/.config/shell not a symlink"; exit 1; }
+          test -L "$HOME/.claude" || { echo "FAIL: ~/.claude not a symlink"; exit 1; }
+
+          echo "=== Symlink targets ==="
+          ls -la "$HOME/.config/nvim"
+          ls -la "$HOME/.config/zellij"
+          ls -la "$HOME/.config/shell"
+          ls -la "$HOME/.claude"
+
+          echo "=== Verifying symlink targets are valid ==="
+          test -f "$HOME/.config/nvim/init.lua" || { echo "FAIL: nvim/init.lua not accessible"; exit 1; }
+          test -f "$HOME/.config/zellij/config.kdl" || { echo "FAIL: zellij/config.kdl not accessible"; exit 1; }
+          test -f "$HOME/.config/shell/core.sh" || { echo "FAIL: shell/core.sh not accessible"; exit 1; }
+          test -f "$HOME/.claude/CLAUDE.md" || { echo "FAIL: claude/CLAUDE.md not accessible"; exit 1; }
+
+          echo "=== All symlinks verified successfully ==="
