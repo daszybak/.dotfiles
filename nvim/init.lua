@@ -90,6 +90,10 @@ P.S. You can delete this when you're done too. It's your config now! :)
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
+-- Load core modules
+require("core.autoread").setup()
+require("core.claude-workflow").setup()
+
 -- Set to true if you have a Nerd Font installed and selected in the terminal
 vim.g.have_nerd_font = true
 
@@ -355,9 +359,17 @@ require("lazy").setup({
 
 			-- Document existing key chains
 			spec = {
+				-- Leader groups
 				{ "<leader>s", group = "[S]earch" },
 				{ "<leader>t", group = "[T]oggle" },
+				{ "<leader>g", group = "[G]it" },
 				{ "<leader>h", group = "Git [H]unk", mode = { "n", "v" } },
+				{ "<leader>x", group = "Trouble/Diagnostics" },
+				-- LSP navigation (gr prefix)
+				{ "gr", group = "LSP [G]oto/[R]efactor" },
+				-- Flash/motion
+				{ "s", desc = "Flash jump", mode = { "n", "x", "o" } },
+				{ "S", desc = "Flash Treesitter", mode = { "n", "x", "o" } },
 			},
 		},
 	},
@@ -1098,6 +1110,59 @@ require("lazy").setup({
 	require("kickstart.plugins.neo-tree"),
 	require("kickstart.plugins.lint"),
 	require("kickstart.plugins.autopairs"),
+	require("kickstart.plugins.gitsigns"),
+	require("kickstart.plugins.diffview"),
+
+	-- ── Lean plugins for Claude Code workflow ───────────────────────────
+	-- Auto-save for smoother external editing workflow
+	{
+		"okuuva/auto-save.nvim",
+		event = { "InsertLeave", "TextChanged" },
+		opts = {
+			enabled = true,
+			trigger_events = {
+				immediate_save = { "BufLeave", "FocusLost" },
+				defer_save = { "InsertLeave", "TextChanged" },
+			},
+			debounce_delay = 1000, -- 1 second delay
+			condition = function(buf)
+				-- Don't auto-save special buffers
+				local buftype = vim.bo[buf].buftype
+				local filetype = vim.bo[buf].filetype
+				if buftype ~= "" or filetype == "gitcommit" then
+					return false
+				end
+				return true
+			end,
+		},
+	},
+
+	-- Flash for quick navigation (lighter than hop/leap)
+	{
+		"folke/flash.nvim",
+		event = "VeryLazy",
+		opts = {
+			modes = {
+				char = { enabled = false }, -- disable f/F/t/T enhancement
+			},
+		},
+		keys = {
+			{ "s", mode = { "n", "x", "o" }, function() require("flash").jump() end, desc = "Flash" },
+			{ "S", mode = { "n", "x", "o" }, function() require("flash").treesitter() end, desc = "Flash Treesitter" },
+		},
+	},
+
+	-- Trouble for better diagnostics view
+	{
+		"folke/trouble.nvim",
+		cmd = "Trouble",
+		opts = {},
+		keys = {
+			{ "<leader>xx", "<cmd>Trouble diagnostics toggle<cr>", desc = "Diagnostics (Trouble)" },
+			{ "<leader>xX", "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", desc = "Buffer Diagnostics (Trouble)" },
+			{ "<leader>xq", "<cmd>Trouble qflist toggle<cr>", desc = "Quickfix (Trouble)" },
+		},
+	},
 }, {
 	ui = {
 		-- If you are using a Nerd Font: set icons to an empty table which will use the

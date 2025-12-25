@@ -1,208 +1,272 @@
-
+#!/usr/bin/env bash
+#
 # install.sh - Cross-platform dotfiles installer
+#
+# Usage:
+#   ./install.sh          # Interactive installation
+#   ./install.sh -y       # Auto-accept all prompts
+#   curl -fsSL <url> | bash -s -- -y
+#
 
 set -euo pipefail
 
+# ─────────────────────────────────────────────────────────────────────────────
 # Configuration
+# ─────────────────────────────────────────────────────────────────────────────
+
 DOTFILES_REPO="git@github.com:daszybak/.dotfiles.git"
-DOTFILES_DIR="$HOME/.dotfiles"
-BACKUP_DIR="$HOME/.dotfiles-$(date +%Y%m%d-%H%M%S)"
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
+BACKUP_DIR="$HOME/.dotfiles-backup-$(date +%Y%m%d-%H%M%S)"
 
-# Parse arguments
-FORCE_YES=false
-INTERACTIVE=true
+# ─────────────────────────────────────────────────────────────────────────────
+# Logging
+# ─────────────────────────────────────────────────────────────────────────────
 
-usage() {
-    echo "Usage: $0 [OPTIONS]"
-    echo "Install dotfiles configuration"
-    echo ""
-    echo "OPTIONS:"
-    echo "    -y, --yes           Auto-answer yes to all prompts"
-    echo "    -i, --interactive   Interactive mode (default)"
-    echo "    -h, --help          Show this help message"
-    echo ""
-    echo "Examples:"
-    echo "    $0                # Interactive installation"
-    echo "    $0 -y             # Force yes to all prompts"
-    echo "    curl -fsSL https://raw.githubusercontent.com/daszybak/.dotfiles/main/install.sh | bash -s -- -y"
+log()   { printf '\033[0;32m[+]\033[0m %s\n' "$*"; }
+warn()  { printf '\033[0;33m[!]\033[0m %s\n' "$*" >&2; }
+error() { printf '\033[0;31m[x]\033[0m %s\n' "$*" >&2; exit 1; }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Argument parsing
+# ─────────────────────────────────────────────────────────────────────────────
+
+AUTO_YES=false
+
+show_help() {
+    cat << 'EOF'
+Usage: install.sh [OPTIONS]
+
+Install dotfiles configuration for macOS and Linux.
+
+Options:
+    -y, --yes       Auto-accept all prompts
+    -h, --help      Show this help message
+
+Examples:
+    ./install.sh              # Interactive mode
+    ./install.sh -y           # Non-interactive mode
+EOF
 }
 
 while [[ $# -gt 0 ]]; do
-    case $1 in
-        -y|--yes) FORCE_YES=true; INTERACTIVE=false; shift;;
-        -i|--interactive) INTERACTIVE=true; FORCE_YES=false; shift;;
-        -h|--help) usage; exit 0;;
-        *) echo "Unknown option: $1" >&2; usage; exit 1;;
+    case "$1" in
+        -y|--yes)   AUTO_YES=true; shift ;;
+        -h|--help)  show_help; exit 0 ;;
+        *)          error "Unknown option: $1" ;;
     esac
 done
 
-log() { echo "[+] $*"; }
-warn() { echo "[!] $*" >&2; }
-error() { echo "[x] $*" >&2; exit 1; }
+# ─────────────────────────────────────────────────────────────────────────────
+# Helper functions
+# ─────────────────────────────────────────────────────────────────────────────
 
 confirm() {
     local prompt="$1"
-    if [[ "$FORCE_YES" == true ]]; then
-        log "$prompt [auto-yes]"
-        return 1 # skip optional stuff in force mode
-    fi
-    while true; do
-        read -rp "$prompt [Y/n] " response
-        case "${response,,}" in
-            y|yes|'') return 0;;
-            n|no) return 1;;
-            *) echo "Please answer y or n.";;
-        esac
-    done
+    [[ "$AUTO_YES" == true ]] && return 0
+    read -rp "$prompt [Y/n] " response
+    [[ -z "$response" || "${response,,}" =~ ^y(es)?$ ]]
 }
 
-# Detect platform
-case "$(uname -s)" in
-    Linux*) [[ -n "${WSL_DISTRO_NAME:-}" || $(grep -qi microsoft /proc/version) ]] && PLATFORM="wsl" || PLATFORM="linux";;
-    Darwin*) PLATFORM="macos";;
-    *) PLATFORM="unknown";;
-esac
-log "Platform detected: $PLATFORM"
-
-# Clone dotfiles repo or use current directory if already in dotfiles
-if [[ ! -d "$DOTFILES_DIR" ]]; then
-    # Check if we're already in a dotfiles directory (for CI/development)
-    if [[ "$(basename "$PWD")" == ".dotfiles" && -f "$PWD/install.sh" ]]; then
-        log "Already in dotfiles directory, using current location"
-        DOTFILES_DIR="$PWD"
-    elif confirm "Clone dotfiles repository?"; then
-        log "Cloning dotfiles..."
-        git clone "$DOTFILES_REPO" "$DOTFILES_DIR" || error "Failed to clone repository"
-    elif [[ "$FORCE_YES" == true ]]; then
-        # In force mode, if we can't clone and we're not in dotfiles dir, try current dir
-        if [[ -f "$PWD/install.sh" ]]; then
-            log "Force mode: using current directory as dotfiles"
-            DOTFILES_DIR="$PWD"
-        else
-            error "Cannot determine dotfiles location in force mode"
-        fi
-    else
-        error "Dotfiles repository required"
-    fi
-fi
-
-cd "$DOTFILES_DIR"
-
-# Backup existing dotfiles
-backup_files() {
-    local files=(".bashrc" ".zshrc" ".gitconfig" ".vimrc" ".tmux.conf")
-    mkdir -p "$BACKUP_DIR"
-    for file in "${files[@]}"; do
-        if [[ -e "$HOME/$file" && ! -L "$HOME/$file" ]]; then
-            log "Backing up $file to $BACKUP_DIR"
-            mv "$HOME/$file" "$BACKUP_DIR/"
-        fi
-    done
-}
-backup_files
-
-# Deploy dotfiles (fallback if stow not used)
-deploy_symlinks() {
-    log "Creating symlinks manually..."
-    
-    # Bash configuration
-    [[ -f "$DOTFILES_DIR/bash/.bashrc" ]] && ln -sf "$DOTFILES_DIR/bash/.bashrc" "$HOME/.bashrc" && log "Linked .bashrc"
-    
-    # Zsh configuration
-    [[ -f "$DOTFILES_DIR/zsh/.zshrc" ]] && ln -sf "$DOTFILES_DIR/zsh/.zshrc" "$HOME/.zshrc" && log "Linked .zshrc"
-    
-    # Git configuration
-    [[ -f "$DOTFILES_DIR/git/.gitconfig" ]] && ln -sf "$DOTFILES_DIR/git/.gitconfig" "$HOME/.gitconfig" && log "Linked .gitconfig"
-    
-    # Tmux configuration
-    [[ -f "$DOTFILES_DIR/tmux/.tmux.conf" ]] && ln -sf "$DOTFILES_DIR/tmux/.tmux.conf" "$HOME/.tmux.conf" && log "Linked .tmux.conf"
-    
-    # Vim configuration
-    [[ -f "$DOTFILES_DIR/vim/.vimrc" ]] && ln -sf "$DOTFILES_DIR/vim/.vimrc" "$HOME/.vimrc" && log "Linked .vimrc"
-    
-    # Neovim configuration
-    if [[ -d "$DOTFILES_DIR/nvim" ]]; then
-        mkdir -p "$HOME/.config"
-        ln -sf "$DOTFILES_DIR/nvim" "$HOME/.config/nvim" && log "Linked neovim config"
-    fi
-    
-
+detect_platform() {
+    case "$(uname -s)" in
+        Darwin) echo "macos" ;;
+        Linux)
+            if [[ -n "${WSL_DISTRO_NAME:-}" ]] || grep -qi microsoft /proc/version 2>/dev/null; then
+                echo "wsl"
+            else
+                echo "linux"
+            fi
+            ;;
+        *) echo "unknown" ;;
+    esac
 }
 
-# ── Deploy dotfiles ────────────────────────────────────────────────
-if confirm "Deploy dotfiles configuration?"; then
+command_exists() {
+    command -v "$1" &>/dev/null
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Symlink management
+# ─────────────────────────────────────────────────────────────────────────────
+
+backup_if_exists() {
+    local target="$1"
+    if [[ -e "$target" && ! -L "$target" ]]; then
+        mkdir -p "$BACKUP_DIR"
+        log "Backing up: $target → $BACKUP_DIR/"
+        mv "$target" "$BACKUP_DIR/"
+    elif [[ -L "$target" ]]; then
+        rm -f "$target"
+    fi
+}
+
+create_symlink() {
+    local source="$1"
+    local target="$2"
+
+    [[ ! -e "$source" ]] && return 0
+
+    backup_if_exists "$target"
+    ln -sf "$source" "$target"
+    log "Linked: $(basename "$target")"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Deployment
+# ─────────────────────────────────────────────────────────────────────────────
+
+deploy_dotfiles() {
     log "Deploying dotfiles..."
 
-    if command -v stow &> /dev/null; then
-        if [[ "$FORCE_YES" == true ]] || confirm "Use stow for managing symlinks?"; then
-            log "Using stow to manage symlinks"
-            for pkg in bash zsh git tmux vim; do
-                if [[ -d "$DOTFILES_DIR/$pkg" ]]; then
-                    log "Stowing package: $pkg"
-                    stow --adopt --target="$HOME" "$pkg" || warn "Conflict detected with '$pkg'. Resolve manually."
-                else
-                    warn "Package '$pkg' not found – skipped"
-                fi
-            done
-            
-            # Handle nvim separately since it goes to ~/.config
-            if [[ -d "$DOTFILES_DIR/nvim" ]]; then
-                log "Stowing nvim to ~/.config"
-                mkdir -p "$HOME/.config"
-                ln -sf "$DOTFILES_DIR/nvim" "$HOME/.config/nvim" && log "Linked neovim config"
-            fi
-        else
-            log "Using manual symlink deployment"
-            deploy_symlinks
-        fi
-    else
-        log "Stow not found, using manual symlink deployment"
-        deploy_symlinks
+    # Shell configs → home directory
+    create_symlink "$DOTFILES_DIR/bash/.bashrc"     "$HOME/.bashrc"
+    create_symlink "$DOTFILES_DIR/zsh/.zshrc"       "$HOME/.zshrc"
+
+    # Git config
+    create_symlink "$DOTFILES_DIR/git/.gitconfig"   "$HOME/.gitconfig"
+
+    # Vim
+    create_symlink "$DOTFILES_DIR/vim/.vimrc"       "$HOME/.vimrc"
+
+    # XDG config directory apps
+    mkdir -p "$HOME/.config"
+
+    # Neovim
+    if [[ -d "$DOTFILES_DIR/nvim" ]]; then
+        backup_if_exists "$HOME/.config/nvim"
+        ln -sf "$DOTFILES_DIR/nvim" "$HOME/.config/nvim"
+        log "Linked: nvim config"
     fi
-fi
 
-# Summary of Stow vs. Manual:
-# Stow creates symlinks like:
-# ~/.bashrc -> ~/.dotfiles/bash/.bashrc
-# It handles folders modularly and is easily reversible (stow -D)
-# In force mode we skip stow to avoid external dependencies
+    # Zellij (replaces tmux)
+    if [[ -d "$DOTFILES_DIR/zellij" ]]; then
+        backup_if_exists "$HOME/.config/zellij"
+        ln -sf "$DOTFILES_DIR/zellij" "$HOME/.config/zellij"
+        log "Linked: zellij config"
+    fi
 
-# ── Source shell configuration ────────────────────────────────────────
-log "Dotfiles installation complete!"
+    # Claude Code
+    if [[ -d "$DOTFILES_DIR/claude" ]]; then
+        backup_if_exists "$HOME/.claude"
+        ln -sf "$DOTFILES_DIR/claude" "$HOME/.claude"
+        log "Linked: claude config"
+    fi
 
-if [[ "$INTERACTIVE" == true ]] && confirm "Source shell configuration now?"; then
-    # Detect current shell and source appropriate config
-    case "$SHELL" in
-        */zsh)
-            if [[ -f "$HOME/.zshrc" ]]; then
-                log "Sourcing .zshrc..."
-                # Note: source in subshell to avoid exit on error
-                (source "$HOME/.zshrc" 2>/dev/null) && log "Successfully sourced .zshrc" || warn "Error sourcing .zshrc"
+    # Shell modules → ~/.config/shell
+    if [[ -d "$DOTFILES_DIR/shell" ]]; then
+        backup_if_exists "$HOME/.config/shell"
+        ln -sf "$DOTFILES_DIR/shell" "$HOME/.config/shell"
+        log "Linked: shell modules"
+    fi
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Package installation
+# ─────────────────────────────────────────────────────────────────────────────
+
+install_packages() {
+    local platform="$1"
+
+    log "Installing essential packages..."
+
+    case "$platform" in
+        macos)
+            if ! command_exists brew; then
+                warn "Homebrew not found. Install from https://brew.sh"
+                warn "Skipping package installation..."
+                return 0
             fi
+            brew install zellij neovim ripgrep fd fzf git-delta lazygit || true
             ;;
-        */bash)
-            if [[ -f "$HOME/.bashrc" ]]; then
-                log "Sourcing .bashrc..."
-                (source "$HOME/.bashrc" 2>/dev/null) && log "Successfully sourced .bashrc" || warn "Error sourcing .bashrc"
+        linux|wsl)
+            if command_exists apt-get; then
+                sudo apt-get update -qq
+                sudo apt-get install -y neovim ripgrep fd-find fzf || true
+                # Zellij via cargo or binary
+                if ! command_exists zellij && command_exists cargo; then
+                    cargo install zellij || true
+                fi
+            elif command_exists dnf; then
+                sudo dnf install -y neovim ripgrep fd-find fzf || true
+            elif command_exists pacman; then
+                sudo pacman -S --noconfirm neovim ripgrep fd fzf zellij || true
             fi
-            ;;
-        *)
-            warn "Unknown shell: $SHELL"
             ;;
     esac
-    
-    log "Configuration loaded! Open a new terminal or run 'exec \$SHELL' to reload completely."
-else
-    log "Restart your shell or run 'exec \$SHELL' to load the new configuration"
-fi
+}
 
-# ── Optional: Install Language Servers ────────────────────────────────────
-if [[ "$INTERACTIVE" == true ]] && confirm "Install language servers for development?"; then
-    if [[ -x "$DOTFILES_DIR/scripts/install-language-servers.sh" ]]; then
-        log "Running language server installer..."
-        "$DOTFILES_DIR/scripts/install-language-servers.sh"
-    else
-        warn "Language server installer not found or not executable"
+install_claude_code() {
+    log "Setting up Claude Code..."
+
+    if ! command_exists npm && ! command_exists pnpm; then
+        warn "npm/pnpm not found. Install Node.js first to use Claude Code."
+        warn "Skipping Claude Code installation..."
+        return 0
     fi
-fi
 
+    if command_exists pnpm; then
+        pnpm add -g @anthropic-ai/claude-code || true
+    elif command_exists npm; then
+        npm install -g @anthropic-ai/claude-code || true
+    fi
+
+    log "Claude Code installed. Run 'claude' to authenticate and start."
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Main
+# ─────────────────────────────────────────────────────────────────────────────
+
+main() {
+    local platform
+    platform=$(detect_platform)
+    log "Platform: $platform"
+
+    # Clone or locate dotfiles
+    if [[ ! -d "$DOTFILES_DIR" ]]; then
+        if [[ -f "./install.sh" && -d "./nvim" ]]; then
+            DOTFILES_DIR="$PWD"
+            log "Using current directory as dotfiles"
+        elif confirm "Clone dotfiles repository?"; then
+            log "Cloning dotfiles..."
+            git clone "$DOTFILES_REPO" "$DOTFILES_DIR"
+        else
+            error "Dotfiles directory not found"
+        fi
+    fi
+
+    cd "$DOTFILES_DIR"
+
+    # Deploy symlinks
+    if confirm "Deploy dotfiles?"; then
+        deploy_dotfiles
+    fi
+
+    # Install packages
+    if confirm "Install packages (zellij, neovim, ripgrep, etc.)?"; then
+        install_packages "$platform"
+    fi
+
+    # Install Claude Code
+    if confirm "Install Claude Code CLI?"; then
+        install_claude_code
+    fi
+
+    # Done
+    echo ""
+    log "Installation complete!"
+    echo ""
+    echo "  Next steps:"
+    echo "    1. Restart your shell:  exec \$SHELL"
+    echo "    2. Open Neovim:         nvim"
+    echo "    3. Start Zellij:        zellij"
+    echo "    4. Authenticate Claude: claude"
+    echo ""
+
+    if [[ -d "$BACKUP_DIR" ]]; then
+        echo "  Backups saved to: $BACKUP_DIR"
+        echo ""
+    fi
+}
+
+main "$@"

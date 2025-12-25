@@ -1,58 +1,97 @@
 #!/usr/bin/env bash
-# uninstall.sh – cleanly remove dotfile links / stow packages
+#
+# uninstall.sh - Remove dotfiles symlinks and restore backups
+#
 
 set -euo pipefail
 
-DOTFILES_DIR="$HOME/.dotfiles"
-BACKUP_DIR="$HOME/.dotfiles-backup"
+# ─────────────────────────────────────────────────────────────────────────────
+# Configuration
+# ─────────────────────────────────────────────────────────────────────────────
 
-log()  { echo -e "[+] $*"; }
-warn() { echo -e "[!] $*" >&2; }
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
+BACKUP_PATTERN="$HOME/.dotfiles-backup-*"
 
-echo "⚠️  This will remove symlinks created by install.sh and restore backups if available."
-read -rp "Proceed? [y/N] " ans
-[[ "${ans,,}" =~ ^(y|yes)$ ]] || { echo "Aborted."; exit 0; }
+# ─────────────────────────────────────────────────────────────────────────────
+# Logging
+# ─────────────────────────────────────────────────────────────────────────────
 
-# ── Unstow dotfiles ────────────────────────────────────────────────
-if command -v stow &> /dev/null; then
-    for pkg in bash zsh git tmux vim; do
-        if [[ -d "$DOTFILES_DIR/$pkg" ]]; then
-            log "Unstowing $pkg from $HOME"
-            stow -D --target="$HOME" "$pkg" || warn "Unstow failed for $pkg"
-        fi
-    done
-    if [[ -d "$DOTFILES_DIR/nvim" ]]; then
-        log "Unstowing nvim from $HOME/.config"
-        stow -D --target="$HOME/.config" nvim || warn "Unstow failed for nvim"
-    fi
-else
-    warn "GNU stow not found – skipping unstow step."
-fi
+log()   { printf '\033[0;32m[+]\033[0m %s\n' "$*"; }
+warn()  { printf '\033[0;33m[!]\033[0m %s\n' "$*" >&2; }
+error() { printf '\033[0;31m[x]\033[0m %s\n' "$*" >&2; exit 1; }
 
-# ── Remove manual or leftover links ────────────────────────────────
-remove_link() {
-    local path="$1"
-    if [[ -L "$path" || -f "$path" || -d "$path" ]]; then
-        log "Removing $path"
-        rm -rf "$path"
+# ─────────────────────────────────────────────────────────────────────────────
+# Confirmation
+# ─────────────────────────────────────────────────────────────────────────────
+
+echo ""
+warn "This will remove all dotfile symlinks and optionally restore backups."
+echo ""
+read -rp "Continue? [y/N] " response
+[[ "${response,,}" =~ ^y(es)?$ ]] || { echo "Aborted."; exit 0; }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Remove symlinks
+# ─────────────────────────────────────────────────────────────────────────────
+
+remove_symlink() {
+    local target="$1"
+    if [[ -L "$target" ]]; then
+        log "Removing symlink: $target"
+        rm -f "$target"
+    elif [[ -e "$target" ]]; then
+        warn "Not a symlink, skipping: $target"
     fi
 }
 
-for file in \
-    "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.gitconfig" \
-    "$HOME/.tmux.conf" "$HOME/.vimrc" \
-    "$HOME/.config/nvim"
-do
-    remove_link "$file"
+log "Removing symlinks..."
+
+# Home directory files
+remove_symlink "$HOME/.bashrc"
+remove_symlink "$HOME/.zshrc"
+remove_symlink "$HOME/.gitconfig"
+remove_symlink "$HOME/.vimrc"
+
+# XDG config directory
+remove_symlink "$HOME/.config/nvim"
+remove_symlink "$HOME/.config/zellij"
+remove_symlink "$HOME/.config/shell"
+remove_symlink "$HOME/.claude"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Restore backups
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Find the most recent backup
+latest_backup=""
+for backup in $BACKUP_PATTERN; do
+    [[ -d "$backup" ]] && latest_backup="$backup"
 done
 
-# ── Restore backup if present ──────────────────────────────────────
-if [[ -d "$BACKUP_DIR" ]]; then
-    log "Restoring backups from $BACKUP_DIR"
-    cp -r "$BACKUP_DIR"/. "$HOME"/
+if [[ -n "$latest_backup" && -d "$latest_backup" ]]; then
+    echo ""
+    read -rp "Restore from backup ($latest_backup)? [y/N] " response
+    if [[ "${response,,}" =~ ^y(es)?$ ]]; then
+        log "Restoring backups..."
+        for file in "$latest_backup"/*; do
+            [[ -e "$file" ]] || continue
+            local_name=$(basename "$file")
+            cp -r "$file" "$HOME/$local_name"
+            log "Restored: $local_name"
+        done
+    fi
 else
-    warn "No backup directory found – nothing to restore."
+    log "No backup directory found."
 fi
 
-log "✅ Uninstall complete. You may now delete $DOTFILES_DIR if desired."
+# ─────────────────────────────────────────────────────────────────────────────
+# Done
+# ─────────────────────────────────────────────────────────────────────────────
 
+echo ""
+log "Uninstall complete."
+echo ""
+echo "  The dotfiles repository is still at: $DOTFILES_DIR"
+echo "  Remove it manually if you no longer need it:"
+echo "    rm -rf $DOTFILES_DIR"
+echo ""

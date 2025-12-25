@@ -1,0 +1,21 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/claude-code/main/schema.json",
+  "permissions": {
+    "allow": [
+      "Bash(git:*)",
+      "Bash(npm:*)",
+      "Bash(pnpm:*)",
+      "Bash(go:*)",
+      "Bash(make:*)",
+      "Read(*)",
+      "Write(*)"
+    ],
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(sudo rm -rf *)"
+    ]
+  },
+  "mcpServers": {},
+  "apiKeySource": "environment"
+}
+
