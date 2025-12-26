@@ -52,6 +52,8 @@ cd ~/.dotfiles
 ├── vim/.vimrc             # Lean Vim setup
 ├── nvim/                  # Neovim configuration
 ├── tmux/.tmux.conf        # Tmux with platform-specific clipboard
+├── zellij/                # Zellij terminal multiplexer config
+│   └── layouts/dev.kdl    # Dev layout (nvim + Claude Code)
 └── shell/
     ├── core.sh
     ├── aliases.sh

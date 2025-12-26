@@ -16,6 +16,8 @@
     ]
   },
   "mcpServers": {},
-  "apiKeySource": "environment"
+  "apiKeySource": "environment",
+  "enabledPlugins": {
+    "gopls-lsp@claude-plugins-official": true
+  }
 }
-
